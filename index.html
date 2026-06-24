@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Event Monitor System</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<body>
+    <header>
+        <h1>🎟️ QR Event Monitor System</h1>
+        <p>Real-Time Guest Entry & Exit Tracker</p>
+    </header>
+
+    <main class="dashboard-container">
+
+        <section class="scanner-section">
+            <h2><span class="icon">📸</span> Live Scanner</h2>
+            <div id="reader"></div>
+            <div id="scanner-message">Ready to scan</div>
+        </section>
+
+        <section class="log-section">
+            <h2><span class="icon">🔔</span> Activity Log</h2>
+            <div id="status-card" class="card-neutral">
+                <h3 id="log-guest-name">No Scan Detected</h3>
+                <p id="log-guest-id">Scan a guest QR code to begin tracking.</p>
+                <div id="log-badge" class="badge">Awaiting Scan</div>
+                <p id="log-time"></p>
+        </section>
+    </main>
+
+    <section class="directory-section">
+        <h2><span class="icon">📋</span> Guest Directory</h2>
+        <div class="table-wrapper">
+            <table id="guest-table">
+                <thread>
+                    <tr>
+                        <th>Guest ID</th>
+                        <th>Full Name</th>
+                        <th>Current Status</th>
+                        <th>Last Action</th>
+                    </tr>
+                </thread>
+                <tbody id="guest-table-body">
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

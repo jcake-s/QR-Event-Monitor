@@ -1,0 +1,243 @@
+:root {
+    --bg-dark: #121824;
+    --bg-card: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent-primary: #6366f1;
+    --status-entry: #10b981;
+    --status-exit: #ef4444;
+    --border-color: #334155;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'segoe UI', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    padding: 2rem 1rem;
+    min-height: 100vh;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.5rem;
+}
+
+header p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.dashboard-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto 2.5rem auto;
+}
+
+@media (min-width: 768px) {
+    .dashboard-container {
+        grid-template-columns: 1fr, 1fr;
+    }
+}
+
+section {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+section h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+section h2 .icon {
+    margin-right: 0.5rem;
+}
+
+.scanner section {
+    display: flex;
+    flex-direction: column;
+}
+
+#reader {
+    width: 100%;
+    background-color: #0f172a;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+#reader button {
+    background-color: var(--accent-primary);
+    color: white;
+    border: none;
+    padding: 0.6rem, 1.2rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 10px auto;
+    transition: opacity 0.2s ease;
+}
+
+#reader button:hover {
+    opacity: 0.9;
+}
+
+#scanner-message {
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+#status-card {
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-radius: 8px;
+    padding: 2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#log-guest-name {
+    font-size: 1.6rem;
+    margin-bottom: 0.5rem;
+}
+
+#log-guest-id {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+#log-time {
+    font-size: 0.85rem;
+    margin-top: 1rem;
+    opacity: 0.8;
+}
+
+.badge {
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.card-neutral {
+    background-color: #1a2333;
+    border: 1px solid var(--border-color);
+}
+
+.card-neutral .badge {
+    background-color: var(--border-muted);
+    color: var(--text-muted);
+}
+
+.card-entry {
+    background-color: rgba(16, 185, 129, 0.15);
+    border: 2px solid var(--status-entry);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.card-entry .badge {
+    background-color: var(--status-entry);
+    color: #064e3b;
+}
+
+.card-exit {
+    background-color: rgba(239, 68, 68, 0.15);
+    border: 2px solid var(--status-exit);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+}
+
+.card-exit .badge {
+    background-color: var(--status-exit);
+    color: #7f1d1d;
+}
+
+.directory-section {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    margin-top: 0.5rem;
+}
+
+th, td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+th {
+    background-color: #1a2333;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+td {
+    font-size: 0.95rem;
+}
+
+tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.status-pill {
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-absent {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-checkout {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
