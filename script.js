@@ -99,7 +99,16 @@ function onScanFailure(error) {
 
 document.addEventListener("DOMContentLoaded", () => {
     renderGuestTable();
-    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250}}, false);
+    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: (viewfinderWidth, viewfinderHeight) => {
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+        return {
+            width: Math.floor(minEdge * 0.7),
+            height: Math.floor(minEdge * 0.7)
+        };
+    }
+},
+false
+);
 
     html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 });
