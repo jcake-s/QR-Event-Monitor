@@ -9,12 +9,11 @@
 </head>
 <body>
     <header>
-        <h1>🎟️ QR Event Monitor System</h1>
+        <h1>🎟️ QR Event Monitor System 🎟️</h1>
         <p>Real-Time Guest Entry & Exit Tracker</p>
     </header>
 
     <main class="dashboard-container">
-
         <section class="scanner-section">
             <h2><span class="icon">📸</span> Live Scanner</h2>
             <div id="reader"></div>
@@ -28,21 +27,37 @@
                 <p id="log-guest-id">Scan a guest QR code to begin tracking.</p>
                 <div id="log-badge" class="badge">Awaiting Scan</div>
                 <p id="log-time"></p>
+            </div> 
         </section>
     </main>
 
     <section class="directory-section">
         <h2><span class="icon">📋</span> Guest Directory</h2>
         <div class="table-wrapper">
+            <div class="metrics-container">
+                <div class="metric-card">
+                    <h3>Total Guests</h3>
+                    <p id="total-guests">0</p>
+                </div>
+                <div class="metric-card animate-inside">
+                    <h3>Inside</h3>
+                    <p id="inside-count">0</p>
+                </div>
+                <div class="metric-card animate-outside">
+                    <h3>Outside / Absent</h3>
+                    <p id="outside-count">0</p>
+                </div>
+            </div>
+            
             <table id="guest-table">
-                <thread>
+                <thead>
                     <tr>
                         <th>Guest ID</th>
                         <th>Full Name</th>
                         <th>Current Status</th>
                         <th>Last Action</th>
                     </tr>
-                </thread>
+                </thead>
                 <tbody id="guest-table-body">
                 </tbody>
             </table>
@@ -50,6 +65,5 @@
     </section>
 
     <script src="script.js"></script>
-
 </body>
 </html>

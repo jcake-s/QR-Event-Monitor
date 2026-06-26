@@ -11,7 +11,17 @@ function saveToLocalStorage() {
 
 function renderGuestTable() {
     const tableBody = document.getElementById('guest-table-body');
+    if (!tableBody) return;
+
     tableBody.innerHTML = '';
+
+    const total = guests.length;
+    const inside = guests.filter(g => g.status === 'Inside').length;
+    const outside = total - inside;
+
+    document.getElementById('total-guests').textContent = total;
+    document.getElementById('inside-count').textContent = inside;
+    document.getElementById('outside-count').textContent = outside;
     
     guests.forEach(guest => {
         const row = document.createElement('tr');
@@ -69,12 +79,18 @@ function handleInvalidScan(scannedText) {
     timeDisplay.textContent = `Timestamp: ${new Date().toLocaleTimeString()}`;
 }
 
-function onScanSuccess(decodedText, decodedResult) {
-    const guest = guests.find(g => g.id === decodedText.trim());
-    const timestamp = new Date().toLocaleTimeString();
+function onScanSuccess(decodedText) {
+    const guestId = decodedText.trim();
+    const guest = guests.find(g => g.id === guestId);
+    const timeStamp = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 
     if (guest) {
         let action = '';
+
         if (guest.status === 'Absent' || guest.status === 'Checked Out') {
             guest.status = 'Inside';
             action = 'ENTRY';
@@ -83,8 +99,8 @@ function onScanSuccess(decodedText, decodedResult) {
             action = 'EXIT';
         }
 
-        guest.lastAction = `${action} at ${timestamp}`;
-
+        guest.lastAction = `${action} at ${timeStamp}`;
+        
         saveToLocalStorage();
         updateActivityLog(guest, action);
         renderGuestTable();
@@ -94,11 +110,11 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 
 function onScanFailure(error) {
-
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     renderGuestTable();
+
     const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: (viewfinderWidth, viewfinderHeight) => {
         const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
         return {
@@ -106,9 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
             height: Math.floor(minEdge * 0.7)
         };
     }
-},
-false
-);
+}, false);
 
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 });
