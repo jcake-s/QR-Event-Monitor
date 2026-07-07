@@ -15,6 +15,67 @@ function saveToLocalStorage() {
     localStorage.setItem('eventGuests', JSON.stringify(guests));
 }
 
+function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+}
+
+function generateNextGuestId() {
+    let maxNum = 0;
+    guest.forEach(g => {
+        const match = /^GUEST-(\d+)$/.exec(g.id);
+        if (match) {
+            maxNum = Math.max(maxNum, parseInt(match[1], 10));
+        }
+    });
+    const next = maxNum + 1;
+    return `GUEST-${String(next).padStart(3, '0')}`;
+}
+
+function addGuest(name, customId) {
+    const errorE1 = document.getElementById('add-guest-error');
+    const trimmedName = name.trim();
+
+    if (errorE1) errorE1.textContent = '';
+
+    if (!trimmedName) {
+        if (errorE1) errorE1.textContent = 'Guest name is required.';
+        return false;
+    }
+
+    let id = customId && customId.trim() ? customId.trim() : generateNextGuestId();
+
+    if (guest.some(g => g.id.toLowerCase() === id.toLowerCase())) {
+        if (errorE1) errorE1.textContent = `Guest ID "${id}" is already in use.`;
+        return false;
+    }
+
+    guest.push({
+        id: id,
+        name: trimmedName,
+        status: 'Absent',
+        lastAction: 'N/A'
+    });
+
+    saveToLocalStorage();
+    renderGuestTable();
+    return true;
+}
+
+function deleteGuest(guestId) {
+    const guest = guest.find(g => g.id === guestId);
+    if (!guest) return;
+
+    if (!confirm(`Remove ${guest.name} (${guest.id}) from the guest directory? This cannot be undone.`)) {
+        return;
+    }
+
+    guest = guest.filter(g => g.id !== guestId);
+    saveToLocalStorage();
+    renderGuestTable();
+}
+
 function renderGuestTable() {
     const tableBody = document.getElementById('guest-table-body');
     if (!tableBody) return;
@@ -37,20 +98,26 @@ function renderGuestTable() {
         if (guest.status === 'Checked Out') statusClass = 'status-checkedout';
 
         row.innerHTML = `
-            <td><strong>${guest.id}</strong></td>
-            <td>${guest.name}</td>
+            <td><strong>${escapeHTML(guest.id)}</strong></td>
+            <td>${escapeHTML(guest.name)}</td>
             <td><span class="status-pill ${statusClass}">${guest.status}</span></td>
-            <td>${guest.lastAction}</td>
+            <td>${escapeHTML(guest.lastAction)}</td>
             <td>
-                <button class="override-btn" data-id="${guest.id}">
+                <button class="override-btn" data-id="${escapeHTML(guest.id)}">
                     🔄 Toggle
                 </button>
             </td>
+            <td>
+                <button class="remove-btn" data-id="${escapeHTML(guest.id)}">
+                    X Remove
+                </button>
+            </td>    
         `;
         tableBody.appendChild(row);
     });
 
     setupOverrideButtons();
+    setupRemoveButtons();
 }
 
 function setupOverrideButtons() {
@@ -59,6 +126,16 @@ function setupOverrideButtons() {
         button.onclick = function() {
             const guestId = this.getAttribute('data-id');
             toggleGuestStatusManual(guestId);
+        };
+    });
+}
+
+function setupRemoveButtons() {
+    const buttons = document.querySelectorAll('.remove-btn');
+    buttons.forEach(button => {
+        button.onclick = function() {
+            const guestId = this.getAttribute('data-id');
+            deleteGuest(guestId);
         };
     });
 }
@@ -193,6 +270,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("export-csv-btn").addEventListener("click", exportToCSV);
     document.getElementById("reset-session-btn").addEventListener("click", resetEventSession);
+
+    const addGuestForm = document.getElementById("add-guest-form");
+    addGuestForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById("new-guest-name");
+        const idInput = document.getElementById("new-guest-id");
+
+        const added = addGuest(nameInput.ariaValueMax, idInput.value);
+        if (added) {
+            nameInput.value = '';
+            idInput.value = '';
+            nameInput.focus();
+        }
+    });
 });
 
 function exportToCSV() {

@@ -35,7 +35,7 @@
             <section class="glass-card log-section">
                 <h2><span class="section-dot dot-purple"></span> Activity Log</h2>
                 <div id="status-card" class="card-neutral">
-                    <div class="log-icon" id="log-icon">📡</div>
+                    <div class="log-icon" id="log-icon">👤</div>
                     <h3 id="log-guest-name">No Scan Detected</h3>
                     <p id="log-guest-id">Scan a guest QR code to begin tracking.</p>
                     <div id="log-badge" class="badge">Awaiting Scan</div>
@@ -56,6 +56,21 @@
                     </button>
                 </div>
             </div>
+
+            <form id="add-guest-form" class="add-guest-form">
+                <div class="form-field">
+                    <label for="new-guest-name">Full Name</label>
+                    <input type="text" id="new-guest-name" placeholder="Enter full name" autocomplete="off" required>
+                </div>
+                <div class="form-field">
+                    <label for="new-guest-id">Guest ID <span class="field-hint">(optional)</span></label>
+                    <input type="text" id="new-guest-id" placeholder="auto-generated if blank" autocomplete="off">
+                </div>
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    <span class="btn-icon">+</span> Add Guest
+                </button>
+                <p id="add-guest-error" class="form-error"></p>
+            </form>
 
             <div class="metrics-container">
                 <div class="metric-card metric-total">
@@ -81,6 +96,7 @@
                             <th>Status</th>
                             <th>Last Action</th>
                             <th>Override</th>
+                            <th>Remove</th>
                         </tr>
                     </thead>
                     <tbody id="guest-table-body"></tbody>
