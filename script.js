@@ -23,7 +23,7 @@ function escapeHTML(str) {
 
 function generateNextGuestId() {
     let maxNum = 0;
-    guest.forEach(g => {
+    guests.forEach(g => {
         const match = /^GUEST-(\d+)$/.exec(g.id);
         if (match) {
             maxNum = Math.max(maxNum, parseInt(match[1], 10));
@@ -46,12 +46,12 @@ function addGuest(name, customId) {
 
     let id = customId && customId.trim() ? customId.trim() : generateNextGuestId();
 
-    if (guest.some(g => g.id.toLowerCase() === id.toLowerCase())) {
+    if (guests.some(g => g.id.toLowerCase() === id.toLowerCase())) {
         if (errorE1) errorE1.textContent = `Guest ID "${id}" is already in use.`;
         return false;
     }
 
-    guest.push({
+    guests.push({
         id: id,
         name: trimmedName,
         status: 'Absent',
@@ -64,14 +64,14 @@ function addGuest(name, customId) {
 }
 
 function deleteGuest(guestId) {
-    const guest = guest.find(g => g.id === guestId);
+    const guest = guests.find(g => g.id === guestId);
     if (!guest) return;
 
     if (!confirm(`Remove ${guest.name} (${guest.id}) from the guest directory? This cannot be undone.`)) {
         return;
     }
 
-    guest = guest.filter(g => g.id !== guestId);
+    guests = guests.filter(g => g.id !== guestId);
     saveToLocalStorage();
     renderGuestTable();
 }
@@ -277,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const nameInput = document.getElementById("new-guest-name");
         const idInput = document.getElementById("new-guest-id");
 
-        const added = addGuest(nameInput.ariaValueMax, idInput.value);
+        const added = addGuest(nameInput.value, idInput.value);
         if (added) {
             nameInput.value = '';
             idInput.value = '';
