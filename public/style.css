@@ -89,6 +89,30 @@ header {
     margin-bottom: 2.5rem;
 }
 
+.connection-badge {
+    margin-left: auto;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.35rem 0.85rem;
+    border-radius: 50px;
+    white-space: nowrap;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-muted);
+    border: 1px solid var(--glass-border);
+}
+
+.connection-badge.connection-ok {
+    background: rgba(52, 211, 153, 0.14);
+    color: var(--green);
+    border-color: rgba(52, 211, 153, 0.35);
+}
+
+.connection-badge.connection-down {
+    background: rgba(248, 113, 113, 0.14);
+    color: var(--red);
+    border-color: rgba(248, 113, 113, 0.35);
+}
+
 .header-icon {
     font-size: 2.4rem;
     filter: drop-shadow(0 0 14px rgba(255,255,255,0.3));
@@ -127,7 +151,6 @@ header {
     overflow: hidden;
 }
 
-/* subtle top sheen */
 .glass-card::before {
     content: '';
     position: absolute;
@@ -482,6 +505,104 @@ td strong {
     transform: scale(0.97);
 }
 
+.add-guest-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 0,9rem;
+    flex-wrap: wrap;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1.75rem;
+    position: relative;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.form-field-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-subtle);
+}
+
+.feild-hint {
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.form-field input {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.75rem;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.form-field input::placeholder {
+    color: var(--text-subtle);
+}
+
+.form-field input:focus {
+    border-color: rgba(79, 142, 247, 0.55);
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.admin-btn-primary {
+    background: var(--blue-glow);
+    color: var(--blue);
+    border-color: rgba(79, 142, 247, 0.4);
+}
+
+.admin-btn-primary:hover {
+    background: rgba(79, 142, 247, 0.28);
+    border-color: rgba(79, 142, 247, 0.6);
+}
+
+.form-error {
+    flex-basis: 100%;
+    font-size: 0.8rem;
+    color: var(--red);
+    min-height: 1.1rem;
+}
+
+.remove-btn {
+    background: rgba(248, 113, 113, 0.06);
+    color: var(--red);
+    border: 1px solid rgba(248, 113, 133, 0.25);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.remove-btn:hover {
+    background: rgba(248 , 113, 113, 0.18);
+    border-color: rgba(248, 113, 113, 0.5);
+}
+
+.remove-btn:active {
+    transform: scale(0.97);
+}
+
 .admin-controls {
     display: flex;
     gap: 0.65rem;
@@ -540,43 +661,3 @@ td strong {
     .form-field { min-width: 0; }
 }
 
-.admin-btn-primary {
-    background: var(--blue-glow);
-    color: var(--blue);
-    border-color: rgba(79, 142, 247, 0.4);
-}
-
-.admin-btn-primary:hover {
-    background: rgba(79, 142, 247, 0.28);
-    border-color: rgba(79, 142, 247, 0.6);
-}
-
-.form-error {
-    flex-basis: 100%;
-    font-size: 0.8rem;
-    color: var(--red);
-    min-height: 1.1rem;
-}
-
-.remove-btn {
-    background: rgba(248, 113, 113, 0.06);
-    color: var(--red);
-    border: 1px solid rgba(248, 113, 133, 0.25);
-    padding: 0.35rem 0.75rem;
-    font-size: 0.78rem;
-    font-weight: 500;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    white-space: nowrap;
-}
-
-.remove-btn:hover {
-    background: rgba(248 , 113, 113, 0.18);
-    border-color: rgba(248, 113, 113, 0.5);
-}
-
-.remove-btn:active {
-    transform: scale(0.97);
-}
