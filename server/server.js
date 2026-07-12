@@ -4,7 +4,8 @@ const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 
 const PORT = process.env.PORT || 3000;
-const PUBLIC_DIR = path.join(__dirname, 'event.db');
+const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+const DB_PATH = path.join(__dirname, 'event.db');
 
 const db = new DatabaseSync(DB_PATH);
 
@@ -12,9 +13,9 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS guests (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'Absent'
+        status TEXT NOT NULL DEFAULT 'Absent',
         lastAction TEXT NOT NULL DEFAULT 'N/A'
-        );
+    );
 `);
 
 const guestCount = db.prepare('SELECT COUNT(*) AS count FROM guests').get().count;
