@@ -89,6 +89,90 @@ header {
     margin-bottom: 2.5rem;
 }
 
+.hidden {
+    display: none;
+}
+
+.login-ovrelay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+.login-modal {
+    width: 100%;
+    max-width: 360px;
+    margin: 1rem;
+}
+
+.login-modal h2 {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0;
+    border-bottom: none;
+    font-size: 1.2rem;
+}
+
+.login-hint {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+}
+
+#login-form input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.85rem;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    outline: none;
+    margin-bottom: 0.5rem;
+}
+
+#login-form input:focus {
+    border-color: rgba(79, 142, 247, 0.55);
+}
+
+.login-buttons {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+}
+
+.login-buttons button {
+    flex: 1;
+    justify-content: center;
+}
+
+.locked-hint {
+    font-size: 0.78rem;
+    color: var(--text-subtle);
+    white-space: nowrap;
+}
+
+.add-guest-form,
+#reset-session-btn,
+#export-csv-btn {
+    display: none;
+}
+
+.staff-authenticated .add-guest-form {
+    display: flex;
+}
+
+.staff-authenticated #reset-session-btn,
+.staff-authenticated #export-csv-btn {
+    display: flex;
+}
+
 .connection-badge {
     margin-left: auto;
     font-size: 0.78rem;

@@ -1,9 +1,5 @@
-let guests = JSON.parse(localStorage.getItem('eventGuests')) || [
-    { id: "GUEST-001", name: "Davy Jones", status: "Absent", lastAction: "N/A"},
-    { id: "GUEST-002", name: "Margarett Diaz", status: "Absent", lastAction: "N/A"},
-    { id: "GUEST-003", name: "Cercii Gonzales", status: "Absent", lastAction: "N/A"},
-    { id: "GUEST-004", name: "Paris Hilton", status: "Absent", lastAction: "N/A"}
-];
+let guests = [];
+let authToken = sessionStorage.getItem('staffToken') || null;
 
 const successSound = new Audio('success.mp3');
 const errorSound = new Audio('error.mp3');
@@ -11,59 +7,150 @@ const errorSound = new Audio('error.mp3');
 successSound.preload = 'auto';
 errorSound.preload = 'auto';
 
-function saveToLocalStorage() {
-    localStorage.setItem('eventGuests', JSON.stringify(guests));
+const GUEST_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+function setConnectionStatus(connected) {
+    const el = document.getElementById('connection-status');
+    if (!el) return;
+    el.textContent = connected ? '● Connected' : '● Connection lost';
+    el.className = connected ? 'connection-badge connection-ok' : 'connection-badge connection-down';
 }
 
-function escapeHTML(str) {
-    const div = document.createElement('div');
-    div.textContent = String(str);
-    return div.innerHTML;
+async function apiRequest(url, options = {}) {
+    const headers = Object.assign({}, options.headers);
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    let response;
+    try {
+        response = await fetch(url, { ...options, headers });
+    } catch (networkErr) {
+        setConnectionStatus(false);
+        throw new Error('Could not reach the server. Check your connection.');
+    }
+
+    setConnectionStatus(true);
+
+    let data = null;
+    const text = await response.text();
+    if (text) {
+        try { data = JSON.parse(text); } catch (parseErr) { /* non-JSON body */ }
+    }
+
+    if (response.status === 401) {
+        setAuthenticated(false);
+    }
+
+    if (!response.ok) {
+        const message = (data && data.error) ? data.error : `Request failed (${response.status})`;
+        throw new Error(message);
+    }
+
+    return data;
 }
 
-function generateNextGuestId() {
-    let maxNum = 0;
-    guests.forEach(g => {
-        const match = /^GUEST-(\d+)$/.exec(g.id);
-        if (match) {
-            maxNum = Math.max(maxNum, parseInt(match[1], 10));
-        }
-    });
-    const next = maxNum + 1;
-    return `GUEST-${String(next).padStart(3, '0')}`;
+async function loadGuests() {
+    try {
+        guests = await apiRequest('/api/guests');
+        renderGuestTable();
+    } catch (err) {
+        console.error('Failed to load guests:', err.message);
+    }
 }
 
-function addGuest(name, customId) {
-    const errorE1 = document.getElementById('add-guest-error');
+function setAuthenticated(isAuthenticated) {
+    if (isAuthenticated) {
+        document.body.classList.add('staff-authenticated');
+    } else {
+        document.body.classList.remove('staff-authenticated');
+        authToken = null;
+        sessionStorage.removeItem('staffToken');
+    }
+
+    const loginBtn = document.getElementById('staff-login-btn');
+    if (loginBtn) {
+        loginBtn.textContent = isAuthenticated ? '🔓 Staff Logout' : '🔒 Staff Login';
+    }
+
+    renderGuestTable();
+}
+
+async function login(pin) {
+    const errorEl = document.getElementById('login-error');
+    if (errorEl) errorEl.textContent = '';
+
+    try {
+        const result = await apiRequest('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin })
+        });
+        authToken = result.token;
+        sessionStorage.setItem('staffToken', authToken);
+        setAuthenticated(true);
+        return true;
+    } catch (err) {
+        if (errorEl) errorEl.textContent = err.message;
+        return false;
+    }
+}
+
+async function logout() {
+    try {
+        await apiRequest('/api/logout', { method: 'POST' });
+    } catch (err) {
+
+    }
+    setAuthenticated(false);
+}
+
+function openLoginModal() {
+    const overlay = document.getElementById('login-overlay');
+    const pinInput = document.getElementById('pin-input');
+    const errorEl = document.getElementById('login-error');
+    if (errorEl) errorEl.textContent = '';
+    if (pinInput) pinInput.value = '';
+    overlay.classList.remove('hidden');
+    pinInput.focus();
+}
+
+function closeLoginModal() {
+    document.getElementById('login-overlay').classList.add('hidden');
+}
+
+async function addGuest(name, customId) {
+    const errorEl = document.getElementById('add-guest-error');
     const trimmedName = name.trim();
 
-    if (errorE1) errorE1.textContent = '';
+    if (errorEl) errorEl.textContent = '';
 
     if (!trimmedName) {
-        if (errorE1) errorE1.textContent = 'Guest name is required.';
+        if (errorEl) errorEl.textContent = 'Guest name is required.';
         return false;
     }
 
-    let id = customId && customId.trim() ? customId.trim() : generateNextGuestId();
-
-    if (guests.some(g => g.id.toLowerCase() === id.toLowerCase())) {
-        if (errorE1) errorE1.textContent = `Guest ID "${id}" is already in use.`;
+    const trimmedId = customId ? customId.trim() : '';
+    if (trimmedId && !GUEST_ID_PATTERN.test(trimmedId)) {
+        if (errorEl) errorEl.textContent = 'Guest ID can only contain letters, numbers, hyphens, and underscores.';
         return false;
     }
 
-    guests.push({
-        id: id,
-        name: trimmedName,
-        status: 'Absent',
-        lastAction: 'N/A'
-    });
-
-    saveToLocalStorage();
-    renderGuestTable();
-    return true;
+    try {
+        await apiRequest('/api/guests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: trimmedName, id: trimmedId })
+        });
+        await loadGuests();
+        return true;
+    } catch (err) {
+        if (errorEl) errorEl.textContent = err.message;
+        return false;
+    }
 }
 
-function deleteGuest(guestId) {
+async function deleteGuest(guestId) {
     const guest = guests.find(g => g.id === guestId);
     if (!guest) return;
 
@@ -71,9 +158,21 @@ function deleteGuest(guestId) {
         return;
     }
 
-    guests = guests.filter(g => g.id !== guestId);
-    saveToLocalStorage();
-    renderGuestTable();
+    try {
+        await apiRequest(`/api/guests/${encodeURIComponent(guestId)}`, { method: 'DELETE' });
+        await loadGuests();
+    } catch (err) {
+        alert(`Could not remove guest: ${err.message}`);
+    }
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function renderGuestTable() {
@@ -90,6 +189,8 @@ function renderGuestTable() {
     document.getElementById('inside-count').textContent = inside;
     document.getElementById('outside-count').textContent = outside;
 
+    const isStaff = document.body.classList.contains('staff-authenticated');
+
     guests.forEach(guest => {
         const row = document.createElement('tr');
 
@@ -98,20 +199,18 @@ function renderGuestTable() {
         if (guest.status === 'Checked Out') statusClass = 'status-checkedout';
 
         row.innerHTML = `
-            <td><strong>${escapeHTML(guest.id)}</strong></td>
-            <td>${escapeHTML(guest.name)}</td>
-            <td><span class="status-pill ${statusClass}">${guest.status}</span></td>
-            <td>${escapeHTML(guest.lastAction)}</td>
+            <td><strong>${escapeHtml(guest.id)}</strong></td>
+            <td>${escapeHtml(guest.name)}</td>
+            <td><span class="status-pill ${statusClass}">${escapeHtml(guest.status)}</span></td>
+            <td>${escapeHtml(guest.lastAction)}</td>
             <td>
-                <button class="override-btn" data-id="${escapeHTML(guest.id)}">
+                <button class="override-btn" data-id="${escapeHtml(guest.id)}">
                     🔄 Toggle
                 </button>
             </td>
             <td>
-                <button class="remove-btn" data-id="${escapeHTML(guest.id)}">
-                    X Remove
-                </button>
-            </td>    
+                ${isStaff ? `<button class="remove-btn" data-id="${escapeHtml(guest.id)}">✕ Remove</button>` : '<span class="locked-hint">🔒 staff only</span>'}
+            </td>
         `;
         tableBody.appendChild(row);
     });
@@ -121,55 +220,35 @@ function renderGuestTable() {
 }
 
 function setupOverrideButtons() {
-    const buttons = document.querySelectorAll('.override-btn');
-    buttons.forEach(button => {
+    document.querySelectorAll('.override-btn').forEach(button => {
         button.onclick = function() {
-            const guestId = this.getAttribute('data-id');
-            toggleGuestStatusManual(guestId);
+            toggleGuestStatusManual(this.getAttribute('data-id'));
         };
     });
 }
 
 function setupRemoveButtons() {
-    const buttons = document.querySelectorAll('.remove-btn');
-    buttons.forEach(button => {
+    document.querySelectorAll('.remove-btn').forEach(button => {
         button.onclick = function() {
-            const guestId = this.getAttribute('data-id');
-            deleteGuest(guestId);
+            deleteGuest(this.getAttribute('data-id'));
         };
     });
 }
 
-function toggleGuestStatusManual(guestId) {
-    const guest = guests.find(g => g.id === guestId);
-    if (!guest) return;
+async function toggleGuestStatusManual(guestId) {
+    try {
+        const updated = await apiRequest(`/api/guests/${encodeURIComponent(guestId)}/toggle`, {
+            method: 'POST'
+        });
 
-    const timeStamp = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
-
-    let action = '';
-
-    if (guest.status === 'Absent' || guest.status === 'Checked Out') {
-        guest.status = 'Inside';
-        action = 'ENTRY';
-    } else if (guest.status === 'Inside') {
-        guest.status = 'Checked Out';
-        action = 'EXIT';
-    }
-
-    guest.lastAction = `MANUAL ${action} at ${timeStamp}`;
-
-    if (typeof successSound !== 'undefined') {
         successSound.currentTime = 0;
         successSound.play().catch(err => console.log("Audio play deferred:", err));
-    }
 
-    saveToLocalStorage();
-    updateActivityLog(guest, action);
-    renderGuestTable();
+        updateActivityLog(updated, updated.action);
+        await loadGuests();
+    } catch (err) {
+        alert(`Could not update guest: ${err.message}`);
+    }
 }
 
 function updateActivityLog(guest, action) {
@@ -182,9 +261,7 @@ function updateActivityLog(guest, action) {
     if (!card || !nameDisplay || !idDisplay || !badge || !timeDisplay) return;
 
     const timeStamp = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
     });
 
     if (action === 'ENTRY') {
@@ -219,35 +296,22 @@ function handleInvalidScan(scannedText) {
     if (timeDisplay) timeDisplay.textContent = `Timestamp: ${new Date().toLocaleTimeString()}`;
 }
 
-function onScanSuccess(decodedText) {
-    const guestId = decodedText.trim();
-    const guest = guests.find(g => g.id === guestId);
-    const timeStamp = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
+async function onScanSuccess(decodedText) {
+    const code = decodedText.trim();
 
-    if (guest) {
-        let action = '';
-
-        if (guest.status === 'Absent' || guest.status === 'Checked Out') {
-            guest.status = 'Inside';
-            action = 'ENTRY';
-        } else if (guest.status === 'Inside') {
-            guest.status = 'Checked Out';
-            action = 'EXIT';
-        }
-
-        guest.lastAction = `${action} at ${timeStamp}`;
+    try {
+        const updated = await apiRequest('/api/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+        });
 
         successSound.currentTime = 0;
         successSound.play().catch(err => console.log("Audio play blocked by browser:", err));
 
-        saveToLocalStorage();
-        updateActivityLog(guest, action);
-        renderGuestTable();
-    } else {
+        updateActivityLog(updated, updated.action);
+        await loadGuests();
+    } catch (err) {
         handleInvalidScan(decodedText);
     }
 }
@@ -256,7 +320,9 @@ function onScanFailure(error) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    renderGuestTable();
+    setAuthenticated(!!authToken);
+
+    loadGuests();
 
     const html5QrcodeScanner = new Html5QrcodeScanner("reader", {
         fps: 10,
@@ -272,25 +338,65 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("reset-session-btn").addEventListener("click", resetEventSession);
 
     const addGuestForm = document.getElementById("add-guest-form");
-    addGuestForm.addEventListener("submit", (e) => {
+    addGuestForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const nameInput = document.getElementById("new-guest-name");
         const idInput = document.getElementById("new-guest-id");
+        const submitBtn = addGuestForm.querySelector('button[type="submit"]');
 
-        const added = addGuest(nameInput.value, idInput.value);
+        submitBtn.disabled = true;
+        const added = await addGuest(nameInput.value, idInput.value);
+        submitBtn.disabled = false;
+
         if (added) {
             nameInput.value = '';
             idInput.value = '';
             nameInput.focus();
         }
     });
+
+    const loginBtn = document.getElementById('staff-login-btn');
+    const loginForm = document.getElementById('login-form');
+    const cancelBtn = document.getElementById('login-cancel-btn');
+
+    loginBtn.addEventListener('click', () => {
+        if (document.body.classList.contains('staff-authenticated')) {
+            logout();
+        } else {
+            openLoginModal();
+        }
+    });
+
+    cancelBtn.addEventListener('click', closeLoginModal);
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pinInput = document.getElementById('pin-input');
+        const success = await login(pinInput.value);
+        if (success) closeLoginModal();
+    });
 });
 
+function csvSafeField(value) {
+    let str = String(value);
+    if (/^[=+\-@]/.test(str)) {
+        str = '\t' + str;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
+}
+
 function exportToCSV() {
+    if (!document.body.classList.contains('staff-authenticated')) {
+        alert('Staff login required to export.');
+        return;
+    }
+
     let csvContent = "data:text/csv;charset=utf-8,Guest ID,Full Name,Current Status,Last Activity\n";
 
     guests.forEach(guest => {
-        let row = `"${guest.id}","${guest.name}","${guest.status}","${guest.lastAction}"`;
+        let row = [guest.id, guest.name, guest.status, guest.lastAction]
+            .map(csvSafeField)
+            .join(',');
         csvContent += row + "\n";
     });
 
@@ -303,18 +409,23 @@ function exportToCSV() {
     document.body.removeChild(downloadLink);
 }
 
-function resetEventSession() {
+async function resetEventSession() {
+    if (!document.body.classList.contains('staff-authenticated')) {
+        alert('Staff login required to reset the session.');
+        return;
+    }
+
     if (!confirm("Are you absolutely sure you want to reset the current session? This will wipe out all tracking timestamps.")) {
         return;
     }
 
-    guests.forEach(guest => {
-        guest.status = "Absent";
-        guest.lastAction = "N/A";
-    });
-
-    saveToLocalStorage();
-    renderGuestTable();
+    try {
+        await apiRequest('/api/reset', { method: 'POST' });
+        await loadGuests();
+    } catch (err) {
+        alert(`Could not reset session: ${err.message}`);
+        return;
+    }
 
     const card = document.getElementById('status-card');
     const nameDisplay = document.getElementById('log-guest-name');

@@ -1,11 +1,49 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { DatabaseSync } = require('node:sqlite');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const DB_PATH = path.join(__dirname, 'event.db');
+
+const ADMIN_PIN = process.env.ADMIN_PIN || '2468';
+if (!process.env.ADMIN_PIN) {
+    console.warn('WARNING: Using the default ADMIN_PIN. Set the ADMIN_PIN environment variable before a real event.');
+}
+
+const validSessions = new Set();
+
+const loginAttempts = new Map();
+const MAX_ATTEMPTS = 3;
+const WINDOWS_MS = 3 * 60 * 1000;
+
+function isRateLimited(ip) {
+    const entry = loginAttempts.get(ip);
+    if (!entry) return false;
+    if (Date.now() - entry.windowStart > WINDOWS_MS) {
+        loginAttempts.delete(ip);
+        return false;
+    }
+    return entry.count >= MAX_ATTEMPTS;
+}
+
+function recordFailedAttempt(ip) {
+    const entry = loginAttempts.get(ip);
+    if (!entry || Date.now() - entry.windowStart > WINDOWS_MS) {
+        loginAttempts.set(ip, { count: 1, windowStart: Date.now()});
+    }else {
+        entry.count += 1;
+    }
+}
+
+function isAuthorized(req) {
+    const header = req.headers['authorization'] || '';
+    const match = /^Bearer (.+)$/.exec(header);
+    if (!match) return false;
+    return validSessions.has(match[1]);
+}
 
 const db = new DatabaseSync(DB_PATH);
 
@@ -75,7 +113,7 @@ function readJsonBody(req) {
     return new Promise((resolve, reject) => {
         let data = '';
         let size = 0;
-        const MAX_BODY_BYTES = 1e6; // 1MB cap — an unbounded read is a memory-exhaustion DoS vector
+        const MAX_BODY_BYTES = 1e6;
  
         req.on('data', (chunk) => {
             size += chunk.length;
@@ -134,8 +172,35 @@ function serveStatic(req, res, pathname) {
 const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
- 
+
     try {
+        if (pathname === '/api/login' && req.method === 'POST') {
+            const ip = req.socket.remoteAddress;
+
+            if (isRateLimited(ip)) {
+                return sendJson(res, 429, { error: 'Too many attempts. Try again in a few minutes.'});
+            }
+
+            const body = await readJsonBody(req);
+            const pin = (body.pin || '').trim();
+
+            if (pin !== ADMIN_PIN) {
+                recordFailedAttempt(ip);
+                return sendJson(res, 401, { error: 'Invalid PIN.'});
+            }
+
+            const token = crypto.randomUUID();
+            validSessions.add(token);
+            return sendJson(res, 200, {token});
+        }
+
+        if (pathname === '/api/logout' && req.method === 'POST') {
+            const header = req.headers['authorization'] || '';
+            const match = /^Bearer (.+)$/.exec(header);
+            if (match) validSessions.delete(match[1]);
+            return sendJson(res, 200, { loggedOut: true});
+        }
+ 
         if (pathname === '/api/guests' && req.method === 'GET') {
             const guests = db.prepare('SELECT * FROM guests ORDER BY rowid').all();
             return sendJson(res, 200, guests);
