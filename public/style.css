@@ -418,6 +418,18 @@ header {
     border: 1px solid rgba(248, 113, 113, 0.35);
 }
 
+.card-offline {
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251,191, 36, 0.35);
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.08) inset, 0 0 20px rgba(251, 191, 36, 0.06);
+}
+
+.card-offline .badge {
+    background: rgba(251, 191, 36, 0.18);
+    color: var(--amber);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
 .directory-section {
     margin-top: 0;
 }

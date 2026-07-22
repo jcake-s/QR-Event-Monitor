@@ -1,6 +1,10 @@
 let guests = [];
 let authToken = sessionStorage.getItem('staffToken') || null;
 
+let lastScanCode = null;
+let lastScanTime = 0;
+const SCAN_COOLDOWN_MS = 3000;
+
 const successSound = new Audio('success.mp3');
 const errorSound = new Audio('error.mp3');
 
@@ -9,25 +13,51 @@ errorSound.preload = 'auto';
 
 const GUEST_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 
+let isOnline = true;
+
 function setConnectionStatus(connected) {
     const el = document.getElementById('connection-status');
-    if (!el) return;
-    el.textContent = connected ? '● Connected' : '● Connection lost';
-    el.className = connected ? 'connection-badge connection-ok' : 'connection-badge connection-down';
+    const wasOnline = isOnline;
+    isOnline = connected;
+
+    if (el) {
+        el.textContent = connected ? 'Connected' : 'Connection lost';
+        el.className = connected ? 'connection-badge connection-ok' : 'connection-badge connection-down';
+    }
+
+    if (connected && !wasOnline) {
+        loadGuests();
+    }
+}
+
+async function checkConnection() {
+    try {
+        const response = await fetch('/api/ping');
+        setConnectionStatus(response.ok);
+    } catch (err) {
+        setConnectionStatus(false);
+    }
+}
+
+function startConnectionMonitor() {
+    checkConnection();
+    setInterval(checkConnection, 5000);
 }
 
 async function apiRequest(url, options = {}) {
     const headers = Object.assign({}, options.headers);
     if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+        headers['Authorization'] =`Bearer ${authToken}`;
     }
 
     let response;
     try {
-        response = await fetch(url, { ...options, headers });
+        response = await fetch(url, { ...options, headers});
     } catch (networkErr) {
         setConnectionStatus(false);
-        throw new Error('Could not reach the server. Check your connection.');
+        const offlineError = new Error('Could not reach the server. Check your connection.');
+        offlineError.isNetworkError = true;
+        throw offlineError;
     }
 
     setConnectionStatus(true);
@@ -296,8 +326,34 @@ function handleInvalidScan(scannedText) {
     if (timeDisplay) timeDisplay.textContent = `Timestamp: ${new Date().toLocaleTimeString()}`;
 }
 
+function handleOfflineScan(scannedText) {
+    const card =  document.getElementById('status-card');
+    const nameDisplay = document.getElementById('log-guest-name');
+    const idDisplay = document.getElementById('log-guest-id');
+    const badge = document.getElementById('log-badge');
+    const timeDisplay = document.getElementById('log-time');
+
+    if (typeof errorSound !== 'undefined') {
+        errorSound.currentTime = 0;
+        errorSound.play().catch(err => console.log("Audio play deferred:", err));
+    }
+
+    if (card) card.className = 'card-offline';
+    if (nameDisplay) nameDisplay.textContent = "Connection Lost";
+    if (idDisplay) idDisplay.textContent = `Scan not recorded - please try again once reconnected.`;
+    if (badge) badge.textContent = "📡 OFFlINE";
+    if (timeDisplay) timeDisplay.textContent = `Timestamp: ${new Date().toLocaleTimeString()}`;
+}
+
 async function onScanSuccess(decodedText) {
     const code = decodedText.trim();
+    const now = Date.now();
+
+    if (code === lastScanCode && (now - lastScanTime) < SCAN_COOLDOWN_MS) {
+        return;
+    }
+    lastScanCode = code;
+    lastScanTime = now;
 
     try {
         const updated = await apiRequest('/api/scan', {
@@ -312,7 +368,12 @@ async function onScanSuccess(decodedText) {
         updateActivityLog(updated, updated.action);
         await loadGuests();
     } catch (err) {
-        handleInvalidScan(decodedText);
+        if (err.isNetworkError) {
+            handleOfflineScan(decodedText);
+        } else {
+            handleInvalidScan(decodedText);
+        }
+        
     }
 }
 
@@ -322,6 +383,7 @@ function onScanFailure(error) {
 document.addEventListener("DOMContentLoaded", () => {
     setAuthenticated(!!authToken);
 
+    startConnectionMonitor();
     loadGuests();
 
     const html5QrcodeScanner = new Html5QrcodeScanner("reader", {
