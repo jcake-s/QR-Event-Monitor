@@ -602,9 +602,8 @@ td strong {
 }
 
 .add-guest-form {
-    display: flex;
     align-items: flex-end;
-    gap: 0,9rem;
+    gap: 0.9rem;
     flex-wrap: wrap;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--glass-border);

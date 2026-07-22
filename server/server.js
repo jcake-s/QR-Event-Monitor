@@ -175,10 +175,10 @@ const server = http.createServer(async (req, res) => {
 
     try {
 
-        if (pathname === 'api/ping' && req.method === 'GET') {
+        if (pathname === '/api/ping' && req.method === 'GET') {
             return sendJson(res, 200, { status: 'ok'});
         }
-        
+
         if (pathname === '/api/login' && req.method === 'POST') {
             const ip = req.socket.remoteAddress;
 
