@@ -239,6 +239,9 @@ function renderGuestTable() {
                 </button>
             </td>
             <td>
+                ${isStaff ? `<button class="qr-btn" data-id="${escapeHtml(guest.id)}">𖣯 QR</button>` : '<span class="locked-hint">🔒 staff only</span>'}
+            </td>
+            <td>
                 ${isStaff ? `<button class="remove-btn" data-id="${escapeHtml(guest.id)}">✕ Remove</button>` : '<span class="locked-hint">🔒 staff only</span>'}
             </td>
         `;
@@ -246,6 +249,7 @@ function renderGuestTable() {
     });
 
     setupOverrideButtons();
+    setupQrButtons();
     setupRemoveButtons();
 }
 
@@ -257,12 +261,118 @@ function setupOverrideButtons() {
     });
 }
 
+function setupQrButtons() {
+    document.querySelectorAll('.qr-btn').forEach(button => {
+        button.onclick = function() {
+            openQrModal(this.getAttribute('data-id'));
+        };
+    });
+}
+
 function setupRemoveButtons() {
     document.querySelectorAll('.remove-btn').forEach(button => {
         button.onclick = function() {
             deleteGuest(this.getAttribute('data-id'));
         };
     });
+}
+
+function qrImageUrl(data, size) {
+    const px = size || 220;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${px}x${px}&data=${encodeURIComponent(data)}`;
+}
+
+function openQrModal(guestId) {
+    const guest = guests.find(g => g.id === guestId);
+    if (!guest) return;
+
+    const overlay = document.getElementById('qr-overlay');
+    const label = document.getElementById('qr-guest-label');
+    const image = document.getElementById('qr-image');
+
+    label.textContent = `${guest.name} - ${guest.id}`;
+    image.src = qrImageUrl(guest.id, 220);
+    image.dataset.guestId = guest.id;
+    image.dataset.guestName = guest.name;
+
+    overlay.classList.remove('hidden');
+}
+
+function closeQrModal() {
+    document.getElementById('qr-overlay').classList.add('hidden');
+}
+
+function printSingleQr() {
+    const image = document.getElementById('qr-image');
+    const guestId = image.dataset.guestId || '';
+    const guestName = image.dataset.guestName || '';
+    openPrintWindow([{ id: guestId, name: guestName}]);
+}
+
+function openPrintWindow(guestList) {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert('Your browser blocked the print window. Please allow pop-ups for this site and try again.');
+        return;
+    }
+
+    const cards = guestList.map(g => `<div class="qr-print-card">
+        <img src="${qrImageUrl(g.id, 200)}" width="200" height="200" alt="QR code for ${escapeHtml(g.id)}">
+            <div class="qr-print-name">${escapeHtml(g.name)}</div>
+            <div class="qr-print-id">${escapeHtml(g.id)}</div>
+        </div>`).join('');
+
+        printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Guest QR Codes</title>
+            <style>
+                body { font-family: sans-serif; margin: 20px; }
+                .qr-print-grid {
+                    display: flex; flex-wrap: wrap; gap: 24px;
+                }
+                .qr-print-card {
+                    text-align: center; padding: 12px;
+                    border: 1px solid #ccc; border-radius: 8px;
+                    width: 220px; page-break-inside: avoid;
+                }
+                .qr-print-name { font-weight: bold; margin-top: 8px; }
+                .qr-print-id { font-family: monospace; color: #555; font-size: 0.85em; }
+            </style>
+        </head>
+        <body>
+            <div class="qr-print-grid">${cards}</div>
+            <script>
+                // Wait for every QR image to actually finish loading before
+                // opening the print dialog — printing too early can produce
+                // blank boxes where the images should be.
+                let loaded = 0;
+                const imgs = document.querySelectorAll('img');
+                if (imgs.length === 0) { window.print(); }
+                imgs.forEach(img => {
+                    img.addEventListener('load', () => {
+                        loaded++;
+                        if (loaded === imgs.length) window.print();
+                    });
+                    img.addEventListener('error', () => {
+                        loaded++;
+                        if (loaded === imgs.length) window.print();
+                    });
+                });
+            <\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+function printAllQrCodes() {
+    if (guests.length === 0) {
+        alert('No guests to print.');
+        return;
+    }
+    openPrintWindow(guests.map(g => ({id: g.id, name: g.name })));
 }
 
 async function toggleGuestStatusManual(guestId) {
@@ -398,6 +508,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("export-csv-btn").addEventListener("click", exportToCSV);
     document.getElementById("reset-session-btn").addEventListener("click", resetEventSession);
+    document.getElementById("print-all-qr-btn").addEventListener("click", printAllQrCodes);
+    document.getElementById("qr-print-btn").addEventListener("click", printSingleQr);
+    document.getElementById("qr-close-btn").addEventListener("click", closeQrModal);
 
     const addGuestForm = document.getElementById("add-guest-form");
     addGuestForm.addEventListener("submit", async (e) => {

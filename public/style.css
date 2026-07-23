@@ -160,7 +160,8 @@ header {
 
 .add-guest-form,
 #reset-session-btn,
-#export-csv-btn {
+#export-csv-btn,
+#print-all-qr-btn {
     display: none;
 }
 
@@ -169,7 +170,8 @@ header {
 }
 
 .staff-authenticated #reset-session-btn,
-.staff-authenticated #export-csv-btn {
+.staff-authenticated #export-csv-btn,
+.staff-authenticated #print-all-qr-btn {
     display: flex;
 }
 
@@ -696,6 +698,45 @@ td strong {
 
 .remove-btn:active {
     transform: scale(0.97);
+}
+
+.qr-btn {
+    background: rgba(79, 142, 247, 0.08);
+    color: var(--blue);
+    border: 1px solid rgba(79, 142, 247, 0.3);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.qr-btn:hover {
+    background: rgba(79, 142, 247, 0.2);
+    border-color: rgba(79, 142, 247, 0.5);
+}
+
+.qr-btn:active {
+    transform: scale(0.97);
+}
+
+.qr-modal {
+    text-align: center;
+}
+
+.qr-image-wrap {
+    background: #ffff;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin: 1rem auto;
+    width: fit-content;
+}
+
+.qr-image-wrap img {
+    display: block;
 }
 
 .admin-controls {
