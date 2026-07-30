@@ -79,6 +79,10 @@
             <div class="directory-header">
                 <h2><span class="section-dot dot-green"></span> Guest Directory</h2>
                 <div class="admin-controls">
+                    <label id="import-csv-btn" for="import-csv-input" class="admin-btn">
+                        <span class="btn-icon">📤</span> Import CSV
+                    </label>
+                    <input type="file" id="import-csv-input" accept=".csv,text/csv" class="hidden">
                     <button id="print-all-qr-btn" class="admin-btn">
                         <span class="btn-icon">🖨️</span> Print ALL QR Codes
                     </button>
@@ -90,6 +94,8 @@
                     </button>
                 </div>
             </div>
+
+            <p class="import-hint">CSV needs a <code>name</code> header column (an <code>id</code> column is optional - left blank, IDs auto-generate).</p>
 
             <form id="add-guest-form" class="add-guest-form">
                 <div class="form-field">

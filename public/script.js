@@ -65,7 +65,7 @@ async function apiRequest(url, options = {}) {
     let data = null;
     const text = await response.text();
     if (text) {
-        try { data = JSON.parse(text); } catch (parseErr) { /* non-JSON body */ }
+        try { data = JSON.parse(text); } catch (parseErr) {  }
     }
 
     if (response.status === 401) {
@@ -147,6 +147,104 @@ function openLoginModal() {
 
 function closeLoginModal() {
     document.getElementById('login-overlay').classList.add('hidden');
+}
+
+function parseCsv(text) {
+    const rows = [];
+    let row = [];
+    let field = '';
+    let inQuotes = false;
+    let i = 0;
+
+    while (i < text.length) {
+        const char = text[i];
+
+        if (inQuotes) {
+            if (char === '"') {
+                if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+                inQuotes = false; i++; continue;
+            }
+            field += char; i++; continue;
+        }
+
+        if (char === '"') { inQuotes = true; i++; continue; }
+        if (char === ',') { row.push(field); field = ''; i++; continue; }
+        if (char === '\r') { i++; continue; }
+        if (char === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+        field += char; i++;
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+
+    return rows;
+}
+
+function csvRowsToGuestObjects(row) {
+    if (rows.length === 0) return [];
+    const header = rows[0].map(h => h.trim().toLowerCase());
+    const nameIdx = header.indexOf('name');
+    const idIdx = header.indexOf('id');
+
+    if (nameIdx === -1) {
+        throw new Error('CSV must have "name" column header.');
+    }
+
+    const guestsToImport = [];
+    for (let i = 1; i < rows.length; i++) {
+        const cols = rows[1];
+        if (cols.length === 1 && cols[0].trim() === '') continue;
+        guestsToImport.push({
+            name: (cols[nameIdx] || '').trim(),
+            id: idIdx !== -1 ? (cols[idIdx] || '').trim() : ''
+        });
+    }
+    return guestsToImport;
+}
+
+async function importGuestsFromCsv(file) {
+    let text;
+    try {
+        text = await file.text();
+    } catch (err) {
+        alert('Could not read the file.');
+        return;
+    }
+
+    let guestsToImport;
+    try {
+        guestsToImport = csvRowsToGuestObjects(parseCsv(text));
+    } catch (err) {
+        alert(err.message);
+        return;
+    }
+
+    if (guestsToImport.length === 0) {
+        alert('No guest rows found in that file.');
+        return;
+    }
+
+    let result;
+    try {
+        result = await apiRequest('/api/guests/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json'},
+            body: JSON.stringify({ guests: guestsToImport})
+        });
+    } catch (err) {
+        alert(`Import failed: ${err.message}`);
+        return;
+    }
+
+    await loadGuests();
+
+    let summary = `Imported ${result.added} guest${result.added === 1 ? '' : 's'}.`;
+    if (result.skipped.length > 0) {
+        const shown = result.skipped.slice(0,10)
+            .map(s => `Row ${s.row}: ${s.reason}`)
+            .join('\n');
+        const more = result.skipped.length > 10 ? `\n...and ${result.skipped.length - 10} more`: '';
+        summary += `\n\nSkipped ${result.skipped.length}:\n${shown}${more}`;
+    }
+    alert(summary);
 }
 
 async function addGuest(name, customId) {
@@ -509,6 +607,14 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("export-csv-btn").addEventListener("click", exportToCSV);
     document.getElementById("reset-session-btn").addEventListener("click", resetEventSession);
     document.getElementById("print-all-qr-btn").addEventListener("click", printAllQrCodes);
+
+    const importInput = document.getElementById("import-csv-input");
+    importInput.addEventListener("change", async () => {
+        const file = importInput.files[0];
+        if (!file) return;
+        await importGuestsFromCsv(file);
+        importInput.value = '';
+    });
     document.getElementById("qr-print-btn").addEventListener("click", printSingleQr);
     document.getElementById("qr-close-btn").addEventListener("click", closeQrModal);
 

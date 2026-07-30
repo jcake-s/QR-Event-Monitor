@@ -161,7 +161,9 @@ header {
 .add-guest-form,
 #reset-session-btn,
 #export-csv-btn,
-#print-all-qr-btn {
+#print-all-qr-btn,
+#import-csv-btn,
+.import-hint {
     display: none;
 }
 
@@ -171,8 +173,27 @@ header {
 
 .staff-authenticated #reset-session-btn,
 .staff-authenticated #export-csv-btn,
-.staff-authenticated #print-all-qr-btn {
+.staff-authenticated #print-all-qr-btn,
+.staff-authenticated #import-csv-btn {
     display: flex;
+}
+
+.staff-authenticated .import-hint {
+    display: block;
+}
+
+.import-hint {
+    font-size: 0.78rem;
+    color: var(--text-subtle);
+    margin-top: -0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.import-hint code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Firca Code', monospace;
 }
 
 .connection-badge {

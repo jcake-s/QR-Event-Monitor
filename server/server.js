@@ -238,6 +238,55 @@ const server = http.createServer(async (req, res) => {
             const guest = db.prepare('SELECT * FROM guests WHERE id = ?').get(id);
             return sendJson(res, 201, guest);
         }
+
+        if (pathname === '/api/guests/import' && req.method === 'POST') {
+            if (!isAuthorized(req)) {
+                return sendJson(res, 401, {error: 'Staff login required.'});
+            }
+
+            const body = await readJsonBody(req);
+            const rows = Array.isArray(body.guests) ? body.guests : [];
+
+            if (rows.length === 0) {
+                return sendJson(res, 400, { error: 'No guests provided.'});
+            }
+
+            if (rows.length > 5000) {
+                return sendJson(res, 400, { error: 'Too many guests in one import (max 5000).'});
+            }
+
+            const addedIds = [];
+            const skipped = [];
+
+            for (let i = 0; i < rows.length; i++) {
+                const rowNum = i + 1;
+                const row = rows[i] || {};
+                const name = (row.name || '').trim();
+
+                if(!name) {
+                    skipped.push({ row: rowNum, reason: 'Missing name'});
+                    continue;
+                }
+
+                let id = (row.id || '').trim() || generateNextGuestId();
+
+                if (!GUEST_ID_PATTERN.test(id)) {
+                    skipped.push({ row: rowNum, reason: `Invalid ID "${id}" (letters, numbers, - and _ only)`});
+                    continue;
+                }
+
+                const existing = db.prepare('SELECT id FROM guests WHERE LOWER(id) = LOWER(?)').get(id);
+                if (existing) {
+                    skipped.push({ row: rowNum, reason: `Duplicate ID "${id}"`});
+                    continue;
+                }
+
+                db.prepare('INSERT INTO guests (id, name, status, lastAction) VALUES (?, ?, ?, ?,)').run (id, name, 'Absent', 'N/A');
+                addedIds.push(id);
+            }
+
+            return sendJson(res, 200, { added: addedIds.length, skipped });
+        }
  
         const deleteMatch = /^\/api\/guests\/([^/]+)$/.exec(pathname);
         if (deleteMatch && req.method === 'DELETE') {
