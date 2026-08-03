@@ -281,7 +281,7 @@ const server = http.createServer(async (req, res) => {
                     continue;
                 }
 
-                db.prepare('INSERT INTO guests (id, name, status, lastAction) VALUES (?, ?, ?, ?,)').run (id, name, 'Absent', 'N/A');
+                db.prepare('INSERT INTO guests (id, name, status, lastAction) VALUES (?, ?, ?, ?)').run (id, name, 'Absent', 'N/A');
                 addedIds.push(id);
             }
 

@@ -178,7 +178,7 @@ function parseCsv(text) {
     return rows;
 }
 
-function csvRowsToGuestObjects(row) {
+function csvRowsToGuestObjects(rows) {
     if (rows.length === 0) return [];
     const header = rows[0].map(h => h.trim().toLowerCase());
     const nameIdx = header.indexOf('name');
@@ -190,7 +190,7 @@ function csvRowsToGuestObjects(row) {
 
     const guestsToImport = [];
     for (let i = 1; i < rows.length; i++) {
-        const cols = rows[1];
+        const cols = rows[i];
         if (cols.length === 1 && cols[0].trim() === '') continue;
         guestsToImport.push({
             name: (cols[nameIdx] || '').trim(),
