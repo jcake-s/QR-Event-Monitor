@@ -207,11 +207,19 @@ const server = http.createServer(async (req, res) => {
         }
  
         if (pathname === '/api/guests' && req.method === 'GET') {
+            if (!isAuthorized(req)) {
+                return sendJson(res, 401, { error: 'Staff login required.'});
+            }
+
             const guests = db.prepare('SELECT * FROM guests ORDER BY rowid').all();
             return sendJson(res, 200, guests);
         }
  
         if (pathname === '/api/guests' && req.method === 'POST') {
+            if (!isAuthorized(req)) {
+                return sendJson(res, 401, { error: 'Staff login required.'});
+            }
+            
             const body = await readJsonBody(req);
             const name = (body.name || '').trim();
  
