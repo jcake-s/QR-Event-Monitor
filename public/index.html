@@ -23,38 +23,8 @@
                 <h1>Event Monitor</h1>
                 <p>Real-time guest entry &amp; exit tracker</p>
             </div>
-            <button id="staff-login-btn" class="admin-btn">🔒 Staff Login</button>
-            <span id="connection-status" class="connection-badge">Connecting...</span>
+            <span id="connection-status" class="connection-badge">Connecting </span>
         </header>
-
-        <div id="login-overlay" class="login-overlay hidden">
-            <div class="login-modal glass-card">
-                <h2>Staff Login</h2>
-                <p class="login-hint">Enter the shared staff PIN to unlock admin actions (add/remove guests, reset, export).</p>
-                <form id="login-form">
-                    <input type="password" id="pin-input" placeholder="PIN" inputmode="numeric" autocomplete="off">
-                    <p id="login-error" class="form-error"></p>
-                    <div class="login-buttons">
-                        <button type="submit" class="admin-btn admin-btn-primary">Log In</button>
-                        <button type="button" id="login-cancel-btn" class="admin-btn">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="qr-overlay" class="login-overlay hidden">
-            <div class="login-modal glass-card qr-modal">
-                <h2>Guest QR Code</h2>
-                <p id="qr-guest-label" class="login-hint"></p>
-                <div class="qr-image-wrap">
-                    <img id="qr-image" alt="QR code" width="220" height="220">
-                </div>
-                <div class="login-buttons">
-                    <button type="button" id="qr-print-btn" class="admin-btn admin-btn-primary">🖨️ Print</button>
-                    <button type="button" id="qr-close-btn" class="admin-btn">Close</button>
-                </div>
-            </div>
-        </div>
 
         <main class="dashboard-container">
             <section class="glass-card scanner-section">
@@ -75,77 +45,11 @@
             </section>
         </main>
 
-        <section class="glass-card directory-section">
-            <div class="directory-header">
-                <h2><span class="section-dot dot-green"></span> Guest Directory</h2>
-                <div class="admin-controls">
-                    <label id="import-csv-btn" for="import-csv-input" class="admin-btn">
-                        <span class="btn-icon">📤</span> Import CSV
-                    </label>
-                    <input type="file" id="import-csv-input" accept=".csv,text/csv" class="hidden">
-                    <button id="print-all-qr-btn" class="admin-btn">
-                        <span class="btn-icon">🖨️</span> Print ALL QR Codes
-                    </button>
-                    <button id="export-csv-btn" class="admin-btn">
-                        <span class="btn-icon">↓</span> Export CSV
-                    </button>
-                    <button id="reset-session-btn" class="admin-btn danger">
-                        <span class="btn-icon">↺</span> Reset Session
-                    </button>
-                </div>
-            </div>
-
-            <p class="import-hint">CSV needs a <code>name</code> header column (an <code>id</code> column is optional - left blank, IDs auto-generate).</p>
-
-            <form id="add-guest-form" class="add-guest-form">
-                <div class="form-field">
-                    <label for="new-guest-name">Full Name</label>
-                    <input type="text" id="new-guest-name" placeholder="Enter full name" autocomplete="off" required>
-                </div>
-                <div class="form-field">
-                    <label for="new-guest-id">Guest ID <span class="field-hint">(optional)</span></label>
-                    <input type="text" id="new-guest-id" placeholder="auto-generated if blank" autocomplete="off">
-                </div>
-                <button type="submit" class="admin-btn admin-btn-primary">
-                    <span class="btn-icon">+</span> Add Guest
-                </button>
-                <p id="add-guest-error" class="form-error"></p>
-            </form>
-
-            <div class="metrics-container">
-                <div class="metric-card metric-total">
-                    <p class="metric-label">Total Guests</p>
-                    <p id="total-guests" class="metric-value">0</p>
-                </div>
-                <div class="metric-card metric-inside">
-                    <p class="metric-label">Inside</p>
-                    <p id="inside-count" class="metric-value">0</p>
-                </div>
-                <div class="metric-card metric-outside">
-                    <p class="metric-label">Outside / Absent</p>
-                    <p id="outside-count" class="metric-value">0</p>
-                </div>
-            </div>
-
-            <div class="table-wrapper">
-                <table id="guest-table">
-                    <thead>
-                        <tr>
-                            <th>Guest ID</th>
-                            <th>Full Name</th>
-                            <th>Status</th>
-                            <th>Last Action</th>
-                            <th>Override</th>
-                            <th>QR</th>
-                            <th>Remove</th>
-                        </tr>
-                    </thead>
-                    <tbody id="guest-table-body"></tbody>
-                </table>
-            </div>
-        </section>
+        <footer class="public-footer">
+            <a href="/admin">Staff Admin</a>
+        </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script src="scanner.js"></script>
 </body>
 </html>
