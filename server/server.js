@@ -324,6 +324,10 @@ const server = http.createServer(async (req, res) => {
             const guests = db.prepare('SELECT * FROM guests ORDER BY rowid').all();
             return sendJson(res, 200, guests);
         }
+
+        if (pathname === '/admin' && req.method === 'GET')  {
+            return serveStatic(req, res, '/admin.html');
+        }
  
         if (req.method === 'GET') {
             return serveStatic(req, res, pathname);
