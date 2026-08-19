@@ -836,4 +836,39 @@ td strong {
     opacity: 1;
     color: var(--text-muted);
 }
- 
+
+.locked-table-message {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-subtle);
+    font-size: 0.9rem;
+}
+
+.icon-offline,
+.icon-unlocked {
+    display: none;
+}
+
+.connection-badge.connection-down .icon-online {
+    display: none;
+}
+
+.connection-badge.connection-down .icon-offline {
+    display: inline;
+}
+
+.staff-authenticated .icon-locked {
+    display: none;
+}
+
+.staff-authenticated .icon-unlocked {
+    display: inline;
+}
+
+#staff-login-btn,
+.qr-btn,
+.remove-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}

@@ -93,7 +93,7 @@ function setAuthenticated(isAuthenticated) {
  
     const loginBtn = document.getElementById('staff-login-btn');
     if (loginBtn) {
-        loginBtn.textContent = isAuthenticated ? '🔓 Staff Logout' : '🔒 Staff Login';
+        loginBtn.textContent = isAuthenticated ? 'Staff Logout' : 'Staff Login';
     }
  
     renderGuestTable();
@@ -112,6 +112,7 @@ async function login(pin) {
         authToken = result.token;
         sessionStorage.setItem('staffToken', authToken);
         setAuthenticated(true);
+        await loadGuests();
         return true;
     } catch (err) {
         if (errorEl) errorEl.textContent = err.message;
@@ -123,7 +124,7 @@ async function logout() {
     try {
         await apiRequest('/api/logout', { method: 'POST' });
     } catch (err) {
-        // still clear local session even if the network call failed
+    
     }
     setAuthenticated(false);
 }
@@ -311,6 +312,15 @@ function renderGuestTable() {
     document.getElementById('outside-count').textContent = outside;
  
     const isStaff = document.body.classList.contains('staff-authenticated');
+
+    if (!isStaff) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="locked-table-message"> Log in as staff to view the guest directory.</td>
+            <tr>
+        `;
+        return;
+    }
  
     guests.forEach(guest => {
         const row = document.createElement('tr');
@@ -326,14 +336,14 @@ function renderGuestTable() {
             <td>${escapeHtml(guest.lastAction)}</td>
             <td>
                 <button class="override-btn" data-id="${escapeHtml(guest.id)}">
-                    🔄 Toggle
+                    Toggle
                 </button>
             </td>
             <td>
-                ${isStaff ? `<button class="qr-btn" data-id="${escapeHtml(guest.id)}">📱 QR</button>` : '<span class="locked-hint">🔒 staff only</span>'}
+                ${isStaff ? `<button class="qr-btn" data-id="${escapeHtml(guest.id)}"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg> QR</button>` : '<span class="locked-hint">staff only</span>'}
             </td>
             <td>
-                ${isStaff ? `<button class="remove-btn" data-id="${escapeHtml(guest.id)}">✕ Remove</button>` : '<span class="locked-hint">🔒 staff only</span>'}
+                ${isStaff ? `<button class="remove-btn" data-id="${escapeHtml(guest.id)}"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Remove</button>` : '<span class="locked-hint">staff only</span>'}
             </td>
         `;
         tableBody.appendChild(row);
